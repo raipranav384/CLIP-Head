@@ -10,7 +10,13 @@ Official Implementation of the paper "CLIP-Head: Text-Guided Generation of Textu
 - Clone the repo
 ```
 cd CLIP-Head
-conda env create -f clip_head.yaml
+conda create -n clip_head python=3.9
+conda activate clip_head
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+pip install -r requirements.txt
+cd NPHM
+pip install -e .
+cd ..
 ```
 
 ### Step 2 
