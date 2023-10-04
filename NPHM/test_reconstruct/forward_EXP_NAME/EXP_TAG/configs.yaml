@@ -1,0 +1,13 @@
+checkpoint_expr: 2500
+checkpoint_shape: 15000
+exp_name_expr: nphm_expression_space_pretrained
+exp_name_shape: nphm_identity_space_pretrained
+lambdas_shape:
+  reg_global: 0.002
+  reg_unobserved: 5.0 0
+  reg_zero: 0.005
+  surface: 2.0
+  symm_dist: 1.0
+local_expr: false
+local_shape: true
+mode: compress
