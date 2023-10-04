@@ -34,7 +34,7 @@ natsort
 libigl
 glm
 moderngl_window
-git+https://github.com/facebookresearch/pytorch3d.git
+git+https://github.com/facebookresearch/pytorch3d.git@v0.2.0
 transformers
 diffusers
 pytorch-lightning
