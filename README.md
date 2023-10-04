@@ -24,7 +24,7 @@ cd ..
 
 ### Step 3
 ```
-bash run_ch.sh
+bash run_ch.sh <prompt>
 ```
 
 
