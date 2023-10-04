@@ -8,7 +8,7 @@ conda activate clip_head
 # Map clip encoding to NPHM latent space, to get a latent vector
 #----------------------------------------------------------------#
 
-python map2Clip_text3.py --prompt $1 
+python map2Clip.py --prompt $1 
 
 #----------------------------------------------------------------#
 # Decode the latent vector, to get a mesh conditioned on text
@@ -31,7 +31,7 @@ python UV_to_3D.py
 #----------------------------------------------------------------#
 # Generate the normal map in parameterized space
 #----------------------------------------------------------------#
-python tex2tex2_dir.py --input ./results
+python normal_tex_dir.py --input ./results
 
 #----------------------------------------------------------------#
 # Generate a texture map conditioned on the normal texture map

@@ -2,3 +2,4 @@ __pycache__/
 NPHM/checkpoints/
 results/
 outputs/
+wrap_animate.py
