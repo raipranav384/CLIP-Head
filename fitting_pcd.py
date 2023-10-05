@@ -173,7 +173,7 @@ def initialize(args):
         'mini': mini,
         'maxi': maxi,
         'resolution': args.resolution,
-        'neutral': args.neutral
+        'neutral': args.neutral,
     }
     return params
 # exp_mean=torch.tensor(np.load('assets/exp_mean.npy'))[0]

@@ -9,11 +9,7 @@ from tqdm import tqdm
 import numpy as np
 import argparse
 
-parser=argparse.ArgumentParser()
-parser.add_argument('--prompt',type=str,default=None)
-parser.add_argument('--cont',action='store_true',default=None)
-parser.add_argument('--train',action='store_true',default=None)
-args=parser.parse_args()
+
 
 class Clip2NPHM(nn.Module):
     def __init__(self, D=8, W=256, input_ch=3, output_ch=4, skips=[4]):
@@ -45,10 +41,10 @@ class Clip2NPHM(nn.Module):
 
 
 
-def process(args):
-    if args.cont:
-        print("!!CONTINUING!!")
-        clip2nphm_model_id.load_state_dict(torch.load(f'./clip2nphm_model_id_more_exp_{1}.pth'))
+def process_lcl(args):
+    # if args.cont:
+    #     print("!!CONTINUING!!")
+    #     clip2nphm_model_id.load_state_dict(torch.load(f'./clip2nphm_model_id_more_exp_{1}.pth'))
     model, _, preprocess = open_clip.create_model_and_transforms('ViT-H-14', pretrained='laion2b_s32b_b79k')
     tokenizer = open_clip.get_tokenizer('ViT-H-14')
     clip2nphm_model_id=Clip2NPHM(input_ch=1024,output_ch=1344)
@@ -98,5 +94,9 @@ def process(args):
 
 if __name__=="__main__":
 
-
-    process(args)
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--prompt',type=str,default=None)
+    parser.add_argument('--cont',action='store_true',default=None)
+    parser.add_argument('--train',action='store_true',default=None)
+    args=parser.parse_args()
+    process_lcl(args)

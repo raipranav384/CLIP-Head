@@ -1,7 +1,7 @@
 #! /bin/zsh
 # conda init zsh
 eval "$(conda shell.bash hook)"
-mkdir -p ./results
+mkdir -p ./results/out/in
 
 conda activate clip_head
 #----------------------------------------------------------------#
@@ -13,7 +13,7 @@ python map2Clip.py --prompt $1
 #----------------------------------------------------------------#
 # Decode the latent vector, to get a mesh conditioned on text
 #----------------------------------------------------------------#
-python ./NPHM/scripts/fitting/fitting_pointclouds.py -cfg_file ./NPHM/scripts/configs/fitting_nphm.yaml -exp_name EXP_NAME -exp_tag EXP_TAG -resolution 256 -sample
+python ./fitting_pcd.py -cfg_file ./NPHM/scripts/configs/fitting_nphm.yaml -exp_name EXP_NAME -exp_tag EXP_TAG -resolution 256 -sample
 
 
 #----------------------------------------------------------------#

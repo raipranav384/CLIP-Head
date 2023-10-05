@@ -118,149 +118,154 @@ def slice_mesh(mesh_path):
 # mesh_path = '/ssd_data/common/NPHM/dataset/0001_shape_mesh.ply'
 # face_col_path = '/ssd_data/common/NPHM/dataset/0001_shape_faces.npy'
 
-parser=argparse.ArgumentParser()
-parser.add_argument('--input',type=str,required=True)
-parser.add_argument('--output', default=None,type=str,required=False)
-args=parser.parse_args()
-if args.output is None:
-    args.output=args.input[:-4]
 
-ref_seam_path = './checkpoints/0001_shape_seam.npy'
-ref_mesh_path='./checkpoints/reference_uv_vt_scaled.obj'
-# ref_bnd = igl.boundary_loop(ref_mesh.face_matrix())
 
-ms=ps.MeshSet()
-ms.load_new_mesh(ref_mesh_path)
-# ms.load_new_mesh('/ssd_data/common/Parameterization/check_uv.obj')
-ms.apply_filter('compute_selection_from_mesh_border')
+def parameterize(args):
+    ref_seam_path = './checkpoints/0001_shape_seam.npy'
+    ref_mesh_path='./checkpoints/reference_uv_vt_scaled.obj'
+    # ref_bnd = igl.boundary_loop(ref_mesh.face_matrix())
 
-ref_mesh=ms.current_mesh()
-ref_bnd=np.arange(ref_mesh.vertex_matrix().shape[0])[ref_mesh.vertex_selection_array()]
+    ms=ps.MeshSet()
+    ms.load_new_mesh(ref_mesh_path)
+    # ms.load_new_mesh('/ssd_data/common/Parameterization/check_uv.obj')
+    ms.apply_filter('compute_selection_from_mesh_border')
+
+    ref_mesh=ms.current_mesh()
+    ref_bnd=np.arange(ref_mesh.vertex_matrix().shape[0])[ref_mesh.vertex_selection_array()]
 
 
 
-ref_seam_indices=np.load(ref_seam_path)
-ref_uv = ref_mesh.vertex_tex_coord_matrix()
-ref_bnd_uv = ref_uv[ref_bnd]
+    ref_seam_indices=np.load(ref_seam_path)
+    ref_uv = ref_mesh.vertex_tex_coord_matrix()
+    ref_bnd_uv = ref_uv[ref_bnd]
 
-tofit = deepcopy(ref_mesh.vertex_matrix())
+    tofit = deepcopy(ref_mesh.vertex_matrix())
 
-ref_seam_right=(ref_bnd[...,np.newaxis]==ref_seam_indices).sum(axis=-1)
-ref_seam_left=(ref_bnd[...,np.newaxis]==np.arange(tofit.shape[0]-ref_seam_indices.shape[0],tofit.shape[0])).sum(axis=-1)
-ref_seam_right=ref_seam_right.astype(bool)
-ref_seam_left=ref_seam_left.astype(bool)
-ref_seam_right=(ref_seam_right+((~ref_seam_left)*(tofit[ref_bnd,1]>0)))>0
+    ref_seam_right=(ref_bnd[...,np.newaxis]==ref_seam_indices).sum(axis=-1)
+    ref_seam_left=(ref_bnd[...,np.newaxis]==np.arange(tofit.shape[0]-ref_seam_indices.shape[0],tofit.shape[0])).sum(axis=-1)
+    ref_seam_right=ref_seam_right.astype(bool)
+    ref_seam_left=ref_seam_left.astype(bool)
+    ref_seam_right=(ref_seam_right+((~ref_seam_left)*(tofit[ref_bnd,1]>0)))>0
 
-ref_seam_base_r=(~ref_seam_left)*(~ref_seam_right)*(tofit[ref_bnd,0]<0)
-ref_seam_base_l=(~ref_seam_left)*(~ref_seam_right)*(tofit[ref_bnd,0]>=0)
-ref_seam_base_l=ref_seam_base_l.astype(bool)
-ref_seam_base_r=ref_seam_base_r.astype(bool)
+    ref_seam_base_r=(~ref_seam_left)*(~ref_seam_right)*(tofit[ref_bnd,0]<0)
+    ref_seam_base_l=(~ref_seam_left)*(~ref_seam_right)*(tofit[ref_bnd,0]>=0)
+    ref_seam_base_l=ref_seam_base_l.astype(bool)
+    ref_seam_base_r=ref_seam_base_r.astype(bool)
 
-print("Before:",tofit.shape,ref_mesh.vertex_matrix().shape)
-ref_tree_r=KDTree(tofit[ref_bnd[ref_seam_right]])
-ref_tree_l=KDTree(tofit[ref_bnd[ref_seam_left]])
-ref_tree_br=KDTree(tofit[ref_bnd[ref_seam_base_r]]*100)
-ref_tree_bl=KDTree(tofit[ref_bnd[ref_seam_base_l]])
-print("After:",tofit.shape,ref_mesh.vertex_matrix().shape)
+    print("Before:",tofit.shape,ref_mesh.vertex_matrix().shape)
+    ref_tree_r=KDTree(tofit[ref_bnd[ref_seam_right]])
+    ref_tree_l=KDTree(tofit[ref_bnd[ref_seam_left]])
+    ref_tree_br=KDTree(tofit[ref_bnd[ref_seam_base_r]]*100)
+    ref_tree_bl=KDTree(tofit[ref_bnd[ref_seam_base_l]])
+    print("After:",tofit.shape,ref_mesh.vertex_matrix().shape)
 
 
 
-mesh_list=glob.glob(os.path.join(args.input,'*'))
-mesh_list=natsort.natsorted(mesh_list)
-for mesh_id in tqdm(mesh_list):
-    if not os.path.isdir(mesh_id):
-        continue
-    # print(mesh_id)
-    # breakpoint()
-    mesh_exp=glob.glob(os.path.join(mesh_id,'*'))
-    mesh_exp=natsort.natsorted(mesh_exp)
-    for mesh_path in mesh_exp:
-        if os.path.exists(os.path.join(mesh_path,'scan_40k_nuv.obj')):
+    mesh_list=glob.glob(os.path.join(args.input,'*'))
+    mesh_list=natsort.natsorted(mesh_list)
+    for mesh_id in tqdm(mesh_list):
+        if not os.path.isdir(mesh_id):
             continue
-        verts,faces,face_colors,seam_indices=slice_mesh(os.path.join(mesh_path,'scan_40k.ply'))
-        face_mask = np.zeros((faces.shape))
-        new_vertices=np.zeros((verts.shape[0]+seam_indices.shape[0],3))
-        new_vertices[:verts.shape[0]]=verts
-        # new_vertices[verts.shape[0]:]=verts[seam_indices]+np.array([0,0.05,0])
-        new_vertices[verts.shape[0]:]=verts[seam_indices]
-
-        seam_bool=np.zeros(verts.shape[0],dtype=bool)
-        seam_bool[seam_indices]=True
-        seam_faces=np.where(((seam_bool[faces[:,0]])+(seam_bool[faces[:,1]])+(seam_bool[faces[:,2]]))>0)[0]
-
-        seam_faces=np.array(seam_faces)
-        print(seam_faces.shape)
-        bnd_orig = igl.boundary_loop(faces)
-        counter=0
-        ###############################################################################
-        for i,seam_face in tqdm(enumerate(seam_faces),total=seam_faces.shape[0]):
-            v0,v1,v2=faces[seam_face] 
-            # print(face_colors[seam_face])
-            if face_colors[seam_face]==1:
-                counter+=1
-                if seam_bool[v0]==True:
-                    idx_seam=np.where(seam_indices==v0)[0]
-                    faces[seam_face,0]=idx_seam[0]+verts.shape[0]
-                    # print(v0,idx_seam[0]+verts.shape[0])
-                if seam_bool[v1]==True:
-                    idx_seam=np.where(seam_indices==v1)[0]
-                    faces[seam_face,1]=idx_seam[0]+verts.shape[0]
-                    # print(v1,idx_seam[0]+verts.shape[0])
-                if seam_bool[v2]==True:
-                    idx_seam=np.where(seam_indices==v2)[0]
-                    faces[seam_face,2]=idx_seam[0]+verts.shape[0]
-                    # print(v2,idx_seam[0]+verts.shape[0])
-        # print(new_vertices[-seam_indices.shape[0]:])
-        ##################################################################################
-
-
-        seam_mesh_init=ps.Mesh(vertex_matrix=new_vertices,face_matrix=faces)
-        ms=ps.MeshSet()
-        ms.add_mesh(seam_mesh_init)
-        # ms.load_new_mesh('/ssd_data/common/Parameterization/check_uv.obj')
-        ms.apply_filter('compute_selection_from_mesh_border')
-        seamed_mesh=ms.current_mesh()
-        bnd=np.arange(seamed_mesh.vertex_matrix().shape[0])[seamed_mesh.vertex_selection_array()]
-
-
-        # new_vertices[:,1]*=-1
-        seam_right=((bnd[...,np.newaxis]==seam_indices).sum(axis=-1))
-        seam_left=(bnd[...,np.newaxis]==(np.arange(verts.shape[0],verts.shape[0]+seam_indices.shape[0]))).sum(axis=-1)
-        seam_right=seam_right.astype(bool)
-        seam_left=seam_left.astype(bool)
-
+        # print(mesh_id)
         # breakpoint()
-        seam_right=(seam_right+((~seam_left)*(new_vertices[bnd,1]>0)))>0
+        mesh_exp=glob.glob(os.path.join(mesh_id,'*'))
+        mesh_exp=natsort.natsorted(mesh_exp)
+        for mesh_path in mesh_exp:
+            if os.path.exists(os.path.join(mesh_path,'scan_40k_nuv.obj')):
+                continue
+            verts,faces,face_colors,seam_indices=slice_mesh(os.path.join(mesh_path,'scan_40k.ply'))
+            face_mask = np.zeros((faces.shape))
+            new_vertices=np.zeros((verts.shape[0]+seam_indices.shape[0],3))
+            new_vertices[:verts.shape[0]]=verts
+            # new_vertices[verts.shape[0]:]=verts[seam_indices]+np.array([0,0.05,0])
+            new_vertices[verts.shape[0]:]=verts[seam_indices]
 
-        seam_base_r=(~seam_right)*(~seam_left)*(new_vertices[bnd,0]<0)
-        seam_base_l=(~seam_right)*(~seam_left)*(new_vertices[bnd,0]>=0)
-        sean_base_r=seam_base_r.astype(bool)
-        seam_base_l=seam_base_l.astype(bool)
+            seam_bool=np.zeros(verts.shape[0],dtype=bool)
+            seam_bool[seam_indices]=True
+            seam_faces=np.where(((seam_bool[faces[:,0]])+(seam_bool[faces[:,1]])+(seam_bool[faces[:,2]]))>0)[0]
 
-        bnd_uv=np.zeros((bnd.shape[0],2))
+            seam_faces=np.array(seam_faces)
+            print(seam_faces.shape)
+            bnd_orig = igl.boundary_loop(faces)
+            counter=0
+            ###############################################################################
+            for i,seam_face in tqdm(enumerate(seam_faces),total=seam_faces.shape[0]):
+                v0,v1,v2=faces[seam_face] 
+                # print(face_colors[seam_face])
+                if face_colors[seam_face]==1:
+                    counter+=1
+                    if seam_bool[v0]==True:
+                        idx_seam=np.where(seam_indices==v0)[0]
+                        faces[seam_face,0]=idx_seam[0]+verts.shape[0]
+                        # print(v0,idx_seam[0]+verts.shape[0])
+                    if seam_bool[v1]==True:
+                        idx_seam=np.where(seam_indices==v1)[0]
+                        faces[seam_face,1]=idx_seam[0]+verts.shape[0]
+                        # print(v1,idx_seam[0]+verts.shape[0])
+                    if seam_bool[v2]==True:
+                        idx_seam=np.where(seam_indices==v2)[0]
+                        faces[seam_face,2]=idx_seam[0]+verts.shape[0]
+                        # print(v2,idx_seam[0]+verts.shape[0])
+            # print(new_vertices[-seam_indices.shape[0]:])
+            ##################################################################################
 
-        _, idx_r = ref_tree_r.query(new_vertices[bnd[seam_right]])
 
-        # breakpoint()
-        bnd_uv[seam_right]=ref_bnd_uv[ref_seam_right][idx_r]
+            seam_mesh_init=ps.Mesh(vertex_matrix=new_vertices,face_matrix=faces)
+            ms=ps.MeshSet()
+            ms.add_mesh(seam_mesh_init)
+            # ms.load_new_mesh('/ssd_data/common/Parameterization/check_uv.obj')
+            ms.apply_filter('compute_selection_from_mesh_border')
+            seamed_mesh=ms.current_mesh()
+            bnd=np.arange(seamed_mesh.vertex_matrix().shape[0])[seamed_mesh.vertex_selection_array()]
 
-        _, idx_l = ref_tree_l.query(new_vertices[bnd[seam_left]])
 
-        bnd_uv[seam_left]=ref_bnd_uv[ref_seam_left][idx_l]
+            # new_vertices[:,1]*=-1
+            seam_right=((bnd[...,np.newaxis]==seam_indices).sum(axis=-1))
+            seam_left=(bnd[...,np.newaxis]==(np.arange(verts.shape[0],verts.shape[0]+seam_indices.shape[0]))).sum(axis=-1)
+            seam_right=seam_right.astype(bool)
+            seam_left=seam_left.astype(bool)
+
+            # breakpoint()
+            seam_right=(seam_right+((~seam_left)*(new_vertices[bnd,1]>0)))>0
+
+            seam_base_r=(~seam_right)*(~seam_left)*(new_vertices[bnd,0]<0)
+            seam_base_l=(~seam_right)*(~seam_left)*(new_vertices[bnd,0]>=0)
+            sean_base_r=seam_base_r.astype(bool)
+            seam_base_l=seam_base_l.astype(bool)
+
+            bnd_uv=np.zeros((bnd.shape[0],2))
+
+            _, idx_r = ref_tree_r.query(new_vertices[bnd[seam_right]])
+
+            # breakpoint()
+            bnd_uv[seam_right]=ref_bnd_uv[ref_seam_right][idx_r]
+
+            _, idx_l = ref_tree_l.query(new_vertices[bnd[seam_left]])
+
+            bnd_uv[seam_left]=ref_bnd_uv[ref_seam_left][idx_l]
 
 
-        _, idx_br = ref_tree_br.query(new_vertices[bnd[seam_base_r]]*100)
+            _, idx_br = ref_tree_br.query(new_vertices[bnd[seam_base_r]]*100)
 
-        bnd_uv[seam_base_r]=ref_bnd_uv[ref_seam_base_r][idx_br]
+            bnd_uv[seam_base_r]=ref_bnd_uv[ref_seam_base_r][idx_br]
 
-        _, idx_bl = ref_tree_bl.query(new_vertices[bnd[seam_base_l]])
+            _, idx_bl = ref_tree_bl.query(new_vertices[bnd[seam_base_l]])
 
-        bnd_uv[seam_base_l]=ref_bnd_uv[ref_seam_base_l][idx_bl]
+            bnd_uv[seam_base_l]=ref_bnd_uv[ref_seam_base_l][idx_bl]
 
-        uv = igl.harmonic_weights(new_vertices.astype(np.float32), faces.astype(np.int64), bnd.astype(np.int64), bnd_uv.astype(np.float32), 1)
-        # _, uv = igl.lscm(new_vertices.astype(np.float32), faces.astype(np.int64), bnd.astype(np.int64), bnd_uv.astype(np.float32))
-        # print(os.path.join(mesh_path,'scan_40k_uv.obj'))
-        write_obj(new_vertices,faces,uv,os.path.join(mesh_path,'scan_40k_nuv.obj')) 
-        # write_obj(new_vertices,faces,uv,os.path.join(mesh_path,'scan_40k_uv.obj')) 
+            uv = igl.harmonic_weights(new_vertices.astype(np.float32), faces.astype(np.int64), bnd.astype(np.int64), bnd_uv.astype(np.float32), 1)
+            # _, uv = igl.lscm(new_vertices.astype(np.float32), faces.astype(np.int64), bnd.astype(np.int64), bnd_uv.astype(np.float32))
+            # print(os.path.join(mesh_path,'scan_40k_uv.obj'))
+            write_obj(new_vertices,faces,uv,os.path.join(mesh_path,'scan_40k_nuv.obj')) 
+            # write_obj(new_vertices,faces,uv,os.path.join(mesh_path,'scan_40k_uv.obj')) 
 
-        # breakpoint()
+            # breakpoint()
+
+if __name__=="__main__":
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--input',type=str,required=True)
+    parser.add_argument('--output', default=None,type=str,required=False)
+    args=parser.parse_args()
+    if args.output is None:
+        args.output=args.input[:-4]
+    parameterize(args)

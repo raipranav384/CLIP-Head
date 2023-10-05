@@ -8,6 +8,8 @@ import random
 from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, UniPCMultistepScheduler, StableDiffusionControlNetInpaintPipeline
 # from src.pipeline_stable_diffusion_controlnet_inpaint import *
 
+from diffusers import DiffusionPipeline
+import torch
 
 import open_clip
 from PIL import Image
@@ -20,72 +22,7 @@ import time
 # import kornia.geometry.transform as tf
 import argparse
 
-# NOTE: USE THIS BY DEFAULT
-controlnet = ControlNetModel.from_pretrained("/ssd_data/common/sollid/staged_approach_low_train_more_epochs", torch_dtype=torch.float16)
-#
-
-# controlnet = ControlNetModel.from_pretrained("/hdd_data/common/sollid/sd_15_ckpt_diffuser", torch_dtype=torch.float16)
-# controlnet = ControlNetModel.from_pretrained("/hdd_data/common/sollid/sd_15_ckpt_diffuser_low_train", torch_dtype=torch.float16)
-
-
-# controlnet_lineart = ControlNetModel.from_pretrained("thibaud/controlnet-sd21-lineart-diffusers", torch_dtype=torch.float16)
-
-# NOTE:
-pipe1 = StableDiffusionControlNetPipeline.from_pretrained(
-    "stabilityai/stable-diffusion-2-1-base", controlnet=controlnet, torch_dtype=torch.float16
-)
-#
-# SPIDER-VERSE LORA
-# pipe1 = StableDiffusionControlNetPipeline.from_pretrained(
-#     "nitrosocke/spider-verse-diffusion", controlnet=controlnet, torch_dtype=torch.float16
-# )
-# # Animated
-# pipe1 = StableDiffusionControlNetPipeline.from_single_file(
-#     "/hdd_data/common/sollid/nphm/hello25dvintageanime_hellorealvintageanime.safetensors", controlnet=controlnet, torch_dtype=torch.float16
-# )
-
-
-# NOTE:
-pipe2 = StableDiffusionControlNetInpaintPipeline.from_pretrained(
-     "stabilityai/stable-diffusion-2-inpainting", controlnet=controlnet,
-     torch_dtype=torch.float16
- )
-
-pipe1.scheduler = UniPCMultistepScheduler.from_config(pipe1.scheduler.config)
-pipe2.scheduler = UniPCMultistepScheduler.from_config(pipe2.scheduler.config)
-
-pipe1.safety_checker = lambda images, clip_input: (images, [False])
-pipe2.safety_checker = lambda images, clip_input: (images, [False])
-
-from diffusers import DiffusionPipeline
-import torch
-
-# pipe_xl = DiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-xl-refiner-1.0", torch_dtype=torch.float16, use_safetensors=True, variant="fp16")
-
-# if using torch < 2.0
-# pipe.enable_xformers_memory_efficient_attention()
-
-
-
-pipe1.enable_xformers_memory_efficient_attention()
-pipe2.enable_xformers_memory_efficient_attention()
-# pipe_xl.enable_xformers_memory_efficient_attention()
-pipe1.to('cuda')
-pipe2.to('cuda')
-# pipe_xl.to("cuda")
-# mode = model.cuda()
-# ddim_sampler = DDIMSampler(model)
-
-face_mesh=mp.solutions.face_mesh.FaceMesh(
-            static_image_mode=True,
-            refine_landmarks=True,
-            max_num_faces=1,
-            min_detection_confidence=0.2)
-json_path = "./MediaPipe/geometry.json" #taken from https://github.com/spite/FaceMeshFaceGeometry/blob/353ee557bec1c8b55a5e46daf785b57df819812c/js/geometry.js
-uv_map = json.load(open(json_path))['export_const_UVS']
-uv_map = np.array(uv_map)
-
-def fix_uv_misalignment(normal_cropped, texture_cropped, uv_res = (512, 512)):
+def fix_uv_misalignment(normal_cropped, texture_cropped, uv_res = (512, 512),uv_map=None,face_mesh=None):
     device=torch.device('cpu')
     H_uv, W_uv = uv_res
     keypoints_uv = np.array([(W_uv*x, H_uv*y) for x,y in uv_map*[1,1]]) # fixed for any image
@@ -149,7 +86,7 @@ def fix_uv_misalignment(normal_cropped, texture_cropped, uv_res = (512, 512)):
     
 
 
-def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, bg_threshold,radius_threshold,warp_resolution,warp_face):
+def process(pipe1,pipe2,uv_map,face_mesh,input_image, prompt, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta, bg_threshold,radius_threshold,warp_resolution,warp_face):
     with torch.no_grad():
 
         img_h,img_w,_=input_image.shape
@@ -248,7 +185,7 @@ def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resoluti
         t1=time.time()
         print('TIME:',time.time()-t1)
         # warped_img=fix_uv_misalignment(init_img_orig_size2,init_img_orig_size,uv_res=(img_w,img_h))
-        warped_img=fix_uv_misalignment(output_init_big,init_crop_orig,uv_res=(init_crop_orig.shape[0],init_crop_orig.shape[1]))
+        warped_img=fix_uv_misalignment(output_init_big,init_crop_orig,uv_res=(init_crop_orig.shape[0],init_crop_orig.shape[1]),uv_map=uv_map,face_mesh=face_mesh)
         if warp_face and  warped_img is not None:
             mask_crop=warped_img.sum(axis=-1)==0
             mask_crop=np.stack([mask_crop,mask_crop,mask_crop],axis=-1)
@@ -309,30 +246,96 @@ def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resoluti
     return [init_img_orig_size] + results
 
 
+if __name__=="__main__":
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--input',type=str,required=True)
+    parser.add_argument('--prompt',type=str,required=True) 
+    parser.add_argument('--a_prompt',type=str,default='best quality, photoreal hair, 8k')
+    parser.add_argument('--n_prompt',type=str,default='longbody, lowres, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality')
+    parser.add_argument('--num_samples',type=int,default=1)
+    parser.add_argument('--image_resolution',type=int,default=512)
+    parser.add_argument('--warp_resolution',type=int,default=768)
+    parser.add_argument('--detect_resolution',type=float,default=0.4)
+    parser.add_argument('--ddim_steps',type=int,default=25)
+    parser.add_argument('--guess_mode',type=bool,default=False)
+    parser.add_argument('--strength',type=float,default=0.85)
+    parser.add_argument('--scale',type=float,default=10.0)
+    parser.add_argument('--seed',type=int,default=-1)
+    parser.add_argument('--eta',type=float,default=0.0)
+    parser.add_argument('--bg_threshold',type=float,default=1.2)
+    parser.add_argument('--radius_threshold',type=float,default=1.0)
+    parser.add_argument('--warp_face',type=bool,default=True)
+    args=parser.parse_args()
 
-parser=argparse.ArgumentParser()
-parser.add_argument('--input',type=str,required=True)
-parser.add_argument('--prompt',type=str,required=True) 
-parser.add_argument('--a_prompt',type=str,default='best quality, photoreal hair, 8k')
-parser.add_argument('--n_prompt',type=str,default='longbody, lowres, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality')
-parser.add_argument('--num_samples',type=int,default=1)
-parser.add_argument('--image_resolution',type=int,default=512)
-parser.add_argument('--warp_resolution',type=int,default=768)
-parser.add_argument('--detect_resolution',type=float,default=0.4)
-parser.add_argument('--ddim_steps',type=int,default=25)
-parser.add_argument('--guess_mode',type=bool,default=False)
-parser.add_argument('--strength',type=float,default=0.85)
-parser.add_argument('--scale',type=float,default=10.0)
-parser.add_argument('--seed',type=int,default=-1)
-parser.add_argument('--eta',type=float,default=0.0)
-parser.add_argument('--bg_threshold',type=float,default=1.2)
-parser.add_argument('--radius_threshold',type=float,default=1.0)
-parser.add_argument('--warp_face',type=bool,default=True)
-args=parser.parse_args()
+    
+    # NOTE: USE THIS BY DEFAULT
+    controlnet = ControlNetModel.from_pretrained("/ssd_data/common/sollid/staged_approach_low_train_more_epochs", torch_dtype=torch.float16)
+    #
 
-input_img=cv2.imread(args.input)
-input_img=cv2.cvtColor(input_img,cv2.COLOR_BGR2RGB)
-output=process(input_img,args.prompt,args.a_prompt,args.n_prompt,args.num_samples,args.image_resolution,args.detect_resolution,args.ddim_steps,args.guess_mode,args.strength,args.scale,args.seed,args.eta,args.bg_threshold,args.radius_threshold, args.warp_resolution,args.warp_face)
+    # controlnet = ControlNetModel.from_pretrained("/hdd_data/common/sollid/sd_15_ckpt_diffuser", torch_dtype=torch.float16)
+    # controlnet = ControlNetModel.from_pretrained("/hdd_data/common/sollid/sd_15_ckpt_diffuser_low_train", torch_dtype=torch.float16)
 
-prompt=args.prompt.replace(',','_').replace(' ','_')
-cv2.imwrite(f'/hdd_data/common/NPHM/nphm_test/test2/out/in/_{prompt}.png',np.array(output[-1])[...,::-1])
+
+    # controlnet_lineart = ControlNetModel.from_pretrained("thibaud/controlnet-sd21-lineart-diffusers", torch_dtype=torch.float16)
+
+    # NOTE:
+    pipe1 = StableDiffusionControlNetPipeline.from_pretrained(
+        "stabilityai/stable-diffusion-2-1-base", controlnet=controlnet, torch_dtype=torch.float16
+    )
+    #
+    # SPIDER-VERSE LORA
+    # pipe1 = StableDiffusionControlNetPipeline.from_pretrained(
+    #     "nitrosocke/spider-verse-diffusion", controlnet=controlnet, torch_dtype=torch.float16
+    # )
+    # # Animated
+    # pipe1 = StableDiffusionControlNetPipeline.from_single_file(
+    #     "/hdd_data/common/sollid/nphm/hello25dvintageanime_hellorealvintageanime.safetensors", controlnet=controlnet, torch_dtype=torch.float16
+    # )
+
+
+    # NOTE:
+    pipe2 = StableDiffusionControlNetInpaintPipeline.from_pretrained(
+        "stabilityai/stable-diffusion-2-inpainting", controlnet=controlnet,
+        torch_dtype=torch.float16
+    )
+
+    pipe1.scheduler = UniPCMultistepScheduler.from_config(pipe1.scheduler.config)
+    pipe2.scheduler = UniPCMultistepScheduler.from_config(pipe2.scheduler.config)
+
+    pipe1.safety_checker = lambda images, clip_input: (images, [False])
+    pipe2.safety_checker = lambda images, clip_input: (images, [False])
+
+
+    # pipe_xl = DiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-xl-refiner-1.0", torch_dtype=torch.float16, use_safetensors=True, variant="fp16")
+
+    # if using torch < 2.0
+    # pipe.enable_xformers_memory_efficient_attention()
+
+
+
+    pipe1.enable_xformers_memory_efficient_attention()
+    pipe2.enable_xformers_memory_efficient_attention()
+    # pipe_xl.enable_xformers_memory_efficient_attention()
+    pipe1.to('cuda')
+    pipe2.to('cuda')
+    # pipe_xl.to("cuda")
+    # mode = model.cuda()
+    # ddim_sampler = DDIMSampler(model)
+
+    face_mesh=mp.solutions.face_mesh.FaceMesh(
+                static_image_mode=True,
+                refine_landmarks=True,
+                max_num_faces=1,
+                min_detection_confidence=0.2)
+    json_path = "./MediaPipe/geometry.json" #taken from https://github.com/spite/FaceMeshFaceGeometry/blob/353ee557bec1c8b55a5e46daf785b57df819812c/js/geometry.js
+    uv_map = json.load(open(json_path))['export_const_UVS']
+    uv_map = np.array(uv_map)
+
+
+
+    input_img=cv2.imread(args.input)
+    input_img=cv2.cvtColor(input_img,cv2.COLOR_BGR2RGB)
+    output=process(pipe1,pipe2,uv_map,face_mesh,input_img,args.prompt,args.a_prompt,args.n_prompt,args.num_samples,args.image_resolution,args.detect_resolution,args.ddim_steps,args.guess_mode,args.strength,args.scale,args.seed,args.eta,args.bg_threshold,args.radius_threshold, args.warp_resolution,args.warp_face)
+
+    prompt=args.prompt.replace(',','_').replace(' ','_')
+    cv2.imwrite(f'./results/out/in/{prompt}.png',np.array(output[-1])[...,::-1])
