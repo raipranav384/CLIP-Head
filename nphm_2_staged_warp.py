@@ -269,7 +269,8 @@ if __name__=="__main__":
 
     
     # NOTE: USE THIS BY DEFAULT
-    controlnet = ControlNetModel.from_pretrained("/ssd_data/common/sollid/staged_approach_low_train_more_epochs", torch_dtype=torch.float16)
+    # controlnet = ControlNetModel.from_pretrained("/ssd_data/common/sollid/staged_approach_low_train_more_epochs", torch_dtype=torch.float16)
+    controlnet = ControlNetModel.from_pretrained("./checkpoints/staged_approach_low_train_more_epochs", torch_dtype=torch.float16)
     #
 
     # controlnet = ControlNetModel.from_pretrained("/hdd_data/common/sollid/sd_15_ckpt_diffuser", torch_dtype=torch.float16)
