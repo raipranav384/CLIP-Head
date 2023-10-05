@@ -24,13 +24,15 @@ conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvi
 
 # Install other requirements
 pip install -r requirements.txt
-pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 
 # Install NPHM dependencies
 cd NPHM
 mkdir checkpoints
 pip install -e .
 cd ..
+
+# Install PyTorch3D
+pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 ```
 
 ### Step 2 
