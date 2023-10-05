@@ -50,6 +50,7 @@ python run.py -p "face of tom cruise"
 
 - [x] Initial Code Release
 - [x] Release Checkpoints
+- [ ] Release Rendering Pipeline
 - [ ] Gradio demo
 - [ ] Refiner code
 - [ ] Checkpoint with SDXL
