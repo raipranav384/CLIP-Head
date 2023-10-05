@@ -22,14 +22,14 @@ conda create -n clip_head python=3.9
 conda activate clip_head
 conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
 
-# Install other requirements
-pip install -r requirements.txt
-
 # Install NPHM dependencies
 cd NPHM
 mkdir checkpoints
 pip install -e .
 cd ..
+
+# Install other requirements
+pip install -r requirements.txt
 
 # Install PyTorch3D
 pip install "git+https://github.com/facebookresearch/pytorch3d.git"
