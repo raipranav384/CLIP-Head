@@ -60,20 +60,20 @@ class dummy(moderngl_window.WindowConfig):
             
             model = trimesh.load(geometry_filename)
 
-            print(save_texture_vertices)
+            # print(save_texture_vertices)
 
 
             vertices = np.array(model.vertices).astype('f4')
             faces = np.array(model.faces).astype('uint32')
             uv = np.array(model.visual.uv).astype('f4')
-            print(faces.dtype, faces.shape, vertices.shape, vertices.dtype)
-            print(uv.shape, uv.dtype)
+            # print(faces.dtype, faces.shape, vertices.shape, vertices.dtype)
+            # print(uv.shape, uv.dtype)
 
             self.vbo = self.ctx.buffer(vertices.flatten().tobytes())
             self.ebo = self.ctx.buffer(faces.flatten().tobytes())
 
             uv = 2 * (uv - .5)
-            print(uv.min(), uv.max())
+            # print(uv.min(), uv.max())
             self.uvo = self.ctx.buffer(uv.astype('f4').flatten().tobytes())
 
             self.vao_content = [
@@ -106,7 +106,7 @@ class dummy(moderngl_window.WindowConfig):
 
         cv2.imwrite(f'v_test_temp.png', vertex_texture[:, :, :3] * 255)
         # print("Done")
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",self.texnames[self.frame_no])
+        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",self.texnames[self.frame_no])
         np.save(self.texnames[self.frame_no], vertex_texture[:, :, :3])
 
         self.frame_no += 1 

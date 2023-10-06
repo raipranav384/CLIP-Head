@@ -186,5 +186,10 @@ os.makedirs(f'./outputs/{args.prompt}',exist_ok=True)
 # mkdir ./outputs/$1 -p
 os.rename('./results/out/in/',f'./outputs/{args.prompt}/')
 os.remove(f'./outputs/{args.prompt}/scan_40k_nuv_surface_pos.npy')
+os.rename(f'./outputs/{args.prompt}/scan_40k_nuv.obj',f'./outputs/{args.prompt}/head_mesh.obj')
 # mv ./results/out/in/* ./outputs/$1/
 # rm ./outputs/$1/scan_40k_nuv_surface_pos.npy
+
+print('###################################################################')
+print(f'Output saved at:\n ./outputs/{args.prompt}/')
+print('###################################################################')

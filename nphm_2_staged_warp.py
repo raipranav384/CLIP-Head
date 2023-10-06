@@ -127,7 +127,6 @@ def process(pipe1,pipe2,uv_map,face_mesh,input_image, prompt, a_prompt, n_prompt
         generator=torch.manual_seed(seed)
         print("!!SEED:",seed)
         # detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
-        print(prompt)
         init_img = pipe1(
             prompt=prompt,
             image=Image.fromarray(input_image_copy),
@@ -154,7 +153,6 @@ def process(pipe1,pipe2,uv_map,face_mesh,input_image, prompt, a_prompt, n_prompt
         init_crop_orig=init_img_orig_size[int(y):int(y+h), int(x):int(x+w)].copy()
 
         # init_crop=cv2.resize(init_crop_orig,(512,512),interpolation=cv2.INTER_LINEAR)
-        print("SHAPES:",input_crop.shape,init_crop_orig.shape)
         output_init = pipe1(
             prompt=prompt,
             # prompt="hres digital photograph of a person,realistic fatial features with bumps and skin pores, insanely detailed, 8k, film",
@@ -207,7 +205,6 @@ def process(pipe1,pipe2,uv_map,face_mesh,input_image, prompt, a_prompt, n_prompt
             init_img=cv2.resize(init_img,(img_w,img_h),interpolation=cv2.INTER_LINEAR)
             init_img[int(y):int(y+h), int(x):int(x+w)]=init_img[int(y):int(y+h), int(x):int(x+w)]*(mask_crop//255)
             init_img[int(y):int(y+h), int(x):int(x+w)]+=output
-            print(init_img.shape)
         # input_image[int(y):int(y+h), int(x):int(x+w)]=output
         else:
             print("refiner failed!")
@@ -218,12 +215,10 @@ def process(pipe1,pipe2,uv_map,face_mesh,input_image, prompt, a_prompt, n_prompt
             init_img=cv2.resize(init_img,(img_w,img_h),interpolation=cv2.INTER_LINEAR)
             init_img[int(y):int(y+h), int(x):int(x+w)]=output_init_big
         # input_image[int(y):int(y+h), int(x):int(x+w)]=output
-        print(input_image.shape,init_img.shape)
         # Image.fromarray(init_img).save('/hdd_data/common/NPHM/nphm_test/test2/out/in/test_init2.png')
         input_image=cv2.resize(input_image,(1024,1024),interpolation=cv2.INTER_LINEAR)
         mask=cv2.resize(mask,(1024,1024),interpolation=cv2.INTER_NEAREST)
         init_img=cv2.resize(init_img,(1024,1024),interpolation=cv2.INTER_LINEAR)
-        print("SHAPES::",input_image.shape,mask.shape,init_img.shape)
         output1 = pipe2(
             prompt,
             # added_prompt="best quality, photoreal hair, 8k",
@@ -238,9 +233,7 @@ def process(pipe1,pipe2,uv_map,face_mesh,input_image, prompt, a_prompt, n_prompt
         ).images[0]
         # output1=output1.resize((img_w,img_h))
         output1=output1.resize((1024,1024))
-        print(np.array(output1).shape,np.array(init_img_orig_size).shape)
         init_img_orig_size=Image.fromarray(init_img_orig_size).resize((1024,1024))
-        print(np.array(output1).shape,np.array(init_img_orig_size).shape)
 
         results = [output1]
     return [init_img_orig_size] + results
