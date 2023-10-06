@@ -41,7 +41,7 @@ pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 
 ### Step 3
 ```
-python run.py -p "face of tom cruise"
+python run.py -p "face of a man smiling with joker makeup"
 ```
 
 
