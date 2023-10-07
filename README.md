@@ -56,12 +56,11 @@ pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 ```
 python run.py --prompt "face of a man smiling with joker makeup"
 ```
+## Citation (will be added soon)
 
 ## Acknowledgement
 * Thanks to [NPHM](https://github.com/SimonGiebenhain/NPHM#learning-neural-parametric-head-models-nphm) authors for providing the dataset and code.
 * Thanks to the amazing work by [lllyasviel](https://github.com/lllyasviel/) on [ControlNet](https://github.com/lllyasviel/ControlNet).
-
-## Citation (will be added soon)
 
 ## Related Works
 * [ClipFace : Text-guided Editing of Textured 3D Morphable Models](https://shivangi-aneja.github.io/projects/clipface/?utm_source=catalyzex.com)
