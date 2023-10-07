@@ -15,7 +15,7 @@
 - [ ] Gradio demo
 - [ ] Add SDXL Refiner
 - [ ] Texture Synthesis with SDXL and LoRA
-- [ ] Parameterization code for FLAME Head model
+- [ ] Parameterization code for FLAME head model
 
 ## Instructions
 
