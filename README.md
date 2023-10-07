@@ -3,8 +3,7 @@
 
 ### [Project Page](https://raipranav384.github.io/clip_head/) | [PDF](https://raipranav384.github.io/clip_head/static/videos/Clip_Head.pdf)
 
-## Method
-![Architecture](./images/Pipeline.png)
+![CLIP-Head](./images/clip-head.gif)
 
 ### TODO
 
@@ -56,3 +55,5 @@ pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 ```
 python run.py --prompt "face of a man smiling with joker makeup"
 ```
+
+## Acknowledgement
