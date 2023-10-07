@@ -62,3 +62,7 @@ python run.py --prompt "face of a man smiling with joker makeup"
 * Thanks to the amazing work by [lllyasviel](https://github.com/lllyasviel/) on [ControlNet](https://github.com/lllyasviel/ControlNet).
 
 ## Citation (will be added soon)
+
+## Related Works
+* [ClipFace : Text-guided Editing of Textured 3D Morphable Models](https://shivangi-aneja.github.io/projects/clipface/?utm_source=catalyzex.com)
+* [High-fidelity 3D Face Generation from Natural Language Descriptions](https://github.com/zhuhao-nju/describe3d)
