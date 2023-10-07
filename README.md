@@ -1,5 +1,5 @@
 # CLIP-Head
-### Official Implementation of the paper "CLIP-Head: Text-Guided Generation of Textured Neural Parametric 3D Head Models"
+#### Official Implementation of the paper "CLIP-Head: Text-Guided Generation of Textured Neural Parametric 3D Head Models" accepted at SIGGRAPH Asia 2023 Technical Communications.
 
 ### [Project Page](https://raipranav384.github.io/clip_head/) | [PDF](https://raipranav384.github.io/clip_head/static/videos/Clip_Head.pdf)
 
@@ -57,3 +57,7 @@ python run.py --prompt "face of a man smiling with joker makeup"
 ```
 
 ## Acknowledgement
+* Thanks to [NPHM](https://github.com/SimonGiebenhain/NPHM#learning-neural-parametric-head-models-nphm) authors for providing the dataset and code.
+* Thanks to the amazing work by [lllyasviel](https://github.com/lllyasviel/) on [ControlNet](https://github.com/lllyasviel/ControlNet).
+
+## Citation (will be added soon)
