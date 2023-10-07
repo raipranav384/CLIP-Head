@@ -9,8 +9,8 @@
 
 - [x] Initial Code Release
 - [x] Release Checkpoints
-- [ ] Release Dreambooth examples
-- [ ] Release Rendering Pipeline
+- [ ] Add Dreambooth support
+- [ ] Release code for rendering pipeline
 - [ ] Code Optimization
 - [ ] Gradio demo
 - [ ] Add SDXL Refiner
