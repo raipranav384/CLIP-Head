@@ -6,6 +6,17 @@
 ## Method
 ![Architecture](./images/Pipeline.png)
 
+### TODO
+
+- [x] Initial Code Release
+- [x] Release Checkpoints
+- [ ] Release Rendering Pipeline
+- [ ] Code Optimization
+- [ ] Gradio demo
+- [ ] Add SDXL Refiner
+- [ ] Texture Synthesis with SDXL and LoRA
+- [ ] Parameterization code for FLAME Head model
+
 ## Instructions
 
 #### The code was tested on an RTX 4090 (24 GB VRAM)
@@ -45,17 +56,3 @@ pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 ```
 python run.py --prompt "face of a man smiling with joker makeup"
 ```
-
-
-
-### TODO
-
-- [x] Initial Code Release
-- [x] Release Checkpoints
-- [ ] Release Rendering Pipeline
-- [ ] Code Optimization
-- [ ] Gradio demo
-- [ ] Refiner code
-- [ ] Checkpoint with SDXL
-- [ ] Parameterization code for FLAME Head model
-
