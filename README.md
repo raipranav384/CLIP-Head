@@ -9,6 +9,7 @@
 
 - [x] Initial Code Release
 - [x] Release Checkpoints
+- [ ] Release Dreambooth examples
 - [ ] Release Rendering Pipeline
 - [ ] Code Optimization
 - [ ] Gradio demo
