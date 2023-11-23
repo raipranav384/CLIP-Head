@@ -1,8 +1,7 @@
 # CLIP-Head
 #### Official Implementation of the paper "CLIP-Head: Text-Guided Generation of Textured Neural Parametric 3D Head Models" accepted at SIGGRAPH Asia 2023 Technical Communications.
-
 ### [Project Page](https://raipranav384.github.io/clip_head/) | [PDF](https://raipranav384.github.io/clip_head/static/videos/Clip_Head.pdf)
-
+If you like our project, please give us a star ⭐ on GitHub for latest update.
 ![CLIP-Head](./images/clip-head.gif)
 
 ### TODO
